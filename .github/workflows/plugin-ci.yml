@@ -1,0 +1,146 @@
+name: Plugin CI/CD
+
+on:
+  pull_request:
+    branches: [develop]
+
+  push:
+    branches: [main]
+
+jobs:
+  test-build:
+    name: Test Plugin in SW ${{ matrix.shopware }} / PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php: [8.2, 8.3]
+        shopware: [6.4.20.2, 6.5.7.4, 6.6.0.2]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+
+      - name: Download shopware-cli
+        run: |
+          curl -Ls https://github.com/FriendsOfShopware/shopware-cli/releases/latest/download/shopware-cli.phar -o shopware-cli.phar
+          chmod +x shopware-cli.phar
+
+      - name: Create Shopware Project
+        run: |
+          php shopware-cli.phar system:create \
+            --shopware-version=${{ matrix.shopware }} \
+            --no-interaction \
+            --working-directory=testing \
+            --php-binary=$(which php)
+
+      - name: Install Plugin
+        run: |
+          cp -R . testing/custom/plugins/NeonlinesMinimalPlugin
+          php shopware-cli.phar extension:install \
+            --working-directory=testing \
+            --activate NeonlinesMinimalPlugin
+
+      - name: Install dependencies & run unit tests
+        run: |
+          composer install
+          ./vendor/bin/phpunit
+
+      - name: Build ZIP (nur bei PHP 8.2 & SW 6.6)
+        if: matrix.shopware == '6.6.0.2' && matrix.php == '8.2'
+        run: |
+          php shopware-cli.phar extension zip --out plugin.zip
+
+      - name: Upload ZIP
+        if: matrix.shopware == '6.6.0.2' && matrix.php == '8.2'
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip
+          path: plugin.zip
+
+  release:
+    name: Release & Upload to Store
+    runs-on: ubuntu-latest
+    needs: test-build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download plugin ZIP
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-zip
+          path: .
+
+      - name: Determine semantic version
+        id: semver
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 || echo "1.0.0")
+          COMMIT_MSG=$(git log -1 --pretty=%B | tr '[:upper:]' '[:lower:]')
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$LAST_TAG"
+
+          if echo "$COMMIT_MSG" | grep -qE 'breaking|!'; then
+            ((MAJOR++)); MINOR=0; PATCH=0
+          elif echo "$COMMIT_MSG" | grep -q 'feat:'; then
+            ((MINOR++)); PATCH=0
+          else
+            ((PATCH++))
+          fi
+
+          NEXT_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update composer.json version
+        run: |
+          jq '.version = "${{ steps.semver.outputs.version }}"' composer.json > composer_tmp.json
+          mv composer_tmp.json composer.json
+
+      - name: Tag new version
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add composer.json
+          git commit -m "chore: bump version to ${{ steps.semver.outputs.version }}"
+          git push
+          git tag ${{ steps.semver.outputs.version }}
+          git push origin ${{ steps.semver.outputs.version }}
+
+      - name: Upload to Shopware Store
+        run: |
+          php shopware-cli.phar account:login \
+            --user "${{ secrets.SHOPWARE_ACCOUNT_USER }}" \
+            --password "${{ secrets.SHOPWARE_ACCOUNT_PASSWORD }}"
+          php shopware-cli.phar extension:upload plugin.zip \
+            --plugin-id ${{ secrets.SHOPWARE_STORE_PLUGIN_ID }}
+
+      - name: Generate changelog
+        run: |
+          echo "## ${{ steps.semver.outputs.version }}" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          git log $(git describe --tags --abbrev=0)^..HEAD --pretty=format:"- %s" >> CHANGELOG.md
+          cat CHANGELOG.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.semver.outputs.version }}
+          name: Release ${{ steps.semver.outputs.version }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge main back into develop
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          git fetch origin develop
+          git checkout develop
+          git merge origin/main --no-edit
+          git push origin develop
