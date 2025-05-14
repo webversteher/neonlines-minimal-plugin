@@ -9,6 +9,16 @@ build:
       enable_es_build_for_admin: false
       enable_es_build_for_storefront: false
       npm_strict: false
+      exclude:
+        - vendor/
+        - .git/
+        - node_modules/
+        - tests/
+        - .phpunit.cache/
+        - .github/
+        - .shopware-extension.yml
+        - .gitignore
+        - phpunit.xml
 
 changelog:
   enabled: true
@@ -17,5 +27,5 @@ store:
   automatic_bugfix_version_compatibility: true
 
 validation:
-  php:
-    linter: native
+  ignore:
+    - php.linter

@@ -23,24 +23,29 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: mbstring, xml, ctype, iconv, intl, json, pdo, zip, bcmath
+          tools: composer
 
       - name: Install dependencies
-        run: composer install --no-interaction --no-scripts --prefer-dist
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --no-scripts --prefer-dist
 
       - name: Run Unit Tests
-        run: vendor/bin/phpunit
+        uses: php-actions/phpunit@v3
+        with:
+          configuration: phpunit.xml.dist
+          php_version: ${{ matrix.php }}
 
       - name: Validate Plugin
-        run: |
-          docker run --rm -v $PWD:/app -w /app shopware/shopware-cli \
-            extension validate /app/custom/plugins/NeonlinesMinimalPlugin
+        uses: FriendsOfShopware/shopware-cli-action@v1
+        with:
+          command: extension validate .
 
       - name: Build ZIP
-        run: |
-          HASH=$(git rev-parse --short HEAD)
-          mkdir -p build
-          docker run --rm -v $PWD:/app -w /app shopware/shopware-cli \
-            extension zip /app/custom/plugins/NeonlinesMinimalPlugin --out /app/build/${HASH}.zip
+        uses: FriendsOfShopware/shopware-cli-action@v1
+        with:
+          command: extension zip . --out build/${{ github.sha }}.zip
 
       - name: Upload ZIP
         uses: actions/upload-artifact@v4
@@ -50,7 +55,7 @@ jobs:
 
   release:
     name: Release & Store Upload
-    if: github.event.pull_request.base == 'main' || github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     needs: test-and-build
     runs-on: ubuntu-latest
 
@@ -67,6 +72,7 @@ jobs:
           major_pattern: 'BREAKING CHANGE:'
           minor_pattern: '(feat|refactor)(\(.*\))?:'
           version_format: '${major}.${minor}.${patch}'
+          bump_each_commit: false
 
       - name: Bump composer version
         run: |
@@ -79,23 +85,20 @@ jobs:
           git push origin main --tags
 
       - name: Build release ZIP
-        run: |
-          mkdir -p build
-          docker run --rm -v $PWD:/app -w /app shopware/shopware-cli \
-            extension zip --out /app/build/${{ steps.semver.outputs.version }}.zip
+        uses: FriendsOfShopware/shopware-cli-action@v1
+        with:
+          command: extension zip . --out build/${{ steps.semver.outputs.version }}.zip
 
       - name: Upload to Shopware Store
         env:
           SHOPWARE_ACCESS_USER: ${{ secrets.SHOPWARE_ACCESS_USER }}
           SHOPWARE_ACCESS_TOKEN: ${{ secrets.SHOPWARE_ACCESS_TOKEN }}
-        run: |
-          docker run --rm -v $PWD:/app -w /app \
-            -e SHOPWARE_ACCESS_USER \
-            -e SHOPWARE_ACCESS_TOKEN \
-            shopware/shopware-cli \
-            extension upload \
-              --zip /app/build/${{ steps.semver.outputs.version }}.zip \
-              --shopware-version 6.4.0.0 # z. B. mindestsupported Version
+        uses: FriendsOfShopware/shopware-cli-action@v1
+        with:
+          command: >
+            extension upload
+            --zip build/${{ steps.semver.outputs.version }}.zip
+            --shopware-version 6.4.0.0
 
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
