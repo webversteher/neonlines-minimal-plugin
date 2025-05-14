@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace NeonlinesWebversteher\NeonlinesMinimalPlugin\Tests\Core;
+namespace Webversteher\NeonlinesMinimalPlugin\Tests\Core;
 
-use NeonlinesWebversteher\NeonlinesMinimalPlugin\Core\VersionChecker;
+use Webversteher\NeonlinesMinimalPlugin\Core\VersionChecker;
 use PHPUnit\Framework\TestCase;
 
 class VersionCheckerTest extends TestCase
