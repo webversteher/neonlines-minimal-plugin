@@ -7,6 +7,9 @@
   "require": {
     "shopware/core": "*"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^10.0"
+  },
   "autoload": {
     "psr-4": {
       "Webversteher\\NeonlinesMinimalPlugin\\": "src/"
@@ -17,6 +20,11 @@
     "label": {
       "de-DE": "Minimal Plugin",
       "en-GB": "Minimal Plugin"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "symfony/runtime": true
     }
   }
 }

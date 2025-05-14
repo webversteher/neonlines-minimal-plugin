@@ -24,9 +24,6 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
 
-      - name: Allow symfony/runtime plugin
-        run: composer config --no-plugins allow-plugins.symfony/runtime true
-
       - name: Install dependencies
         run: composer install --no-interaction --no-scripts --prefer-dist
 
