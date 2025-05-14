@@ -86,16 +86,16 @@ jobs:
         with:
           command: extension zip . --out build/${{ steps.semver.outputs.version }}.zip
 
-      - name: Upload to Shopware Store
-        env:
-          SHOPWARE_ACCESS_USER: ${{ secrets.SHOPWARE_ACCESS_USER }}
-          SHOPWARE_ACCESS_TOKEN: ${{ secrets.SHOPWARE_ACCESS_TOKEN }}
-        uses: FriendsOfShopware/shopware-cli-action@v1
-        with:
-          command: >
-            extension upload
-            --zip build/${{ steps.semver.outputs.version }}.zip
-            --shopware-version 6.4.0.0
+      #- name: Upload to Shopware Store
+      #  env:
+      #    SHOPWARE_ACCESS_USER: ${{ secrets.SHOPWARE_ACCESS_USER }}
+      #    SHOPWARE_ACCESS_TOKEN: ${{ secrets.SHOPWARE_ACCESS_TOKEN }}
+      #  uses: FriendsOfShopware/shopware-cli-action@v1
+      #  with:
+      #    command: >
+      #      extension upload
+      #      --zip build/${{ steps.semver.outputs.version }}.zip
+      #      --shopware-version 6.4.0.0
 
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
