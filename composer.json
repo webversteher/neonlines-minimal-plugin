@@ -3,19 +3,48 @@
   "description": "Minimal Plugin mit Minor-Versionserkennung",
   "type": "shopware-platform-plugin",
   "license": "MIT",
+  "version": "0.0.1",
   "require": {
     "shopware/core": "*"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^10.0"
+  },
   "autoload": {
     "psr-4": {
-      "NeonlinesWebversteher\NeonlinesWebversteher\NeonlinesMinimalPlugin\\": "src/"
+      "Webversteher\\NeonlinesMinimalPlugin\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Webversteher\\NeonlinesMinimalPlugin\\Tests\\": "tests/"
+    }
+  },
+
   "extra": {
-    "shopware-plugin-class": "NeonlinesWebversteher\NeonlinesWebversteher\NeonlinesMinimalPlugin\\NeonlinesMinimalPlugin",
+    "shopware-plugin-class": "Webversteher\\NeonlinesMinimalPlugin\\NeonlinesMinimalPlugin",
+    "plugin-icon": "src/Resources/config/plugin.png",
+    "copyright": "(c) by webversteher GmbH & Co KG",
     "label": {
       "de-DE": "Minimal Plugin",
-      "en-GB": "Minimal Plugin"
+      "en-GB": "Minimal PLugin"
+    },
+    "description": {
+      "de-DE": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accu!",
+      "en-GB": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accu!"
+    },
+    "manufacturerLink": {
+      "de-DE": "https://www.webversteher.de",
+      "en-GB": "https://www.webversteher.de"
+    },
+    "supportLink": {
+      "de-DE": "https://www.webversteher.de",
+      "en-GB": "https://www.webversteher.de"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "symfony/runtime": true
     }
   }
 }

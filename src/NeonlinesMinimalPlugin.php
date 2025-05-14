@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace NeonlinesMinimalPlugin;
+namespace Webversteher\NeonlinesMinimalPlugin;
 
 use Shopware\Core\Framework\Plugin;
 use Shopware\Core\Framework\Plugin\Context\ActivateContext;
-use NeonlinesWebversteher\NeonlinesMinimalPlugin\Core\VersionChecker;
+use Webversteher\NeonlinesMinimalPlugin\Core\VersionChecker;
 
 class NeonlinesMinimalPlugin extends Plugin
 {

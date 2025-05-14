@@ -5,6 +5,6 @@
              https://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
-        <service id="NeonlinesWebversteher\NeonlinesMinimalPlugin\Core\VersionChecker" public="true" />
+        <service id="Webversteher\NeonlinesMinimalPlugin\Core\VersionChecker" public="true" />
     </services>
 </container>

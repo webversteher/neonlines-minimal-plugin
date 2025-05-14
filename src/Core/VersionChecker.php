@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace NeonlinesWebversteher\NeonlinesMinimalPlugin\Core;
+namespace Webversteher\NeonlinesMinimalPlugin\Core;
 
 use Shopware\Core\Framework\Feature;
 

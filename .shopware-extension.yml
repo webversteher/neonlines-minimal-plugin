@@ -1,0 +1,31 @@
+build:
+  shopwareVersionConstraint: '~6.4.0'
+  zip:
+    assets:
+      enabled: false
+      before_hooks: []
+      after_hooks: []
+      disable_sass: false
+      enable_es_build_for_admin: false
+      enable_es_build_for_storefront: false
+      npm_strict: false
+      exclude:
+        - vendor/
+        - .git/
+        - node_modules/
+        - tests/
+        - .phpunit.cache/
+        - .github/
+        - .shopware-extension.yml
+        - .gitignore
+        - phpunit.xml
+
+changelog:
+  enabled: true
+
+store:
+  automatic_bugfix_version_compatibility: true
+
+validation:
+  ignore:
+    - php.linter
