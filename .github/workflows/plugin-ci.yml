@@ -33,14 +33,14 @@ jobs:
       - name: Validate Plugin
         run: |
           docker run --rm -v $PWD:/app -w /app shopware/shopware-cli \
-            extension validate /app
+            extension validate /app/custom/plugins/NeonlinesMinimalPlugin
 
       - name: Build ZIP
         run: |
           HASH=$(git rev-parse --short HEAD)
           mkdir -p build
           docker run --rm -v $PWD:/app -w /app shopware/shopware-cli \
-            extension zip /app --out /app/build/${HASH}.zip
+            extension zip /app/custom/plugins/NeonlinesMinimalPlugin --out /app/build/${HASH}.zip
 
       - name: Upload ZIP
         uses: actions/upload-artifact@v4

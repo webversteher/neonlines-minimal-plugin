@@ -23,9 +23,23 @@
 
   "extra": {
     "shopware-plugin-class": "Webversteher\\NeonlinesMinimalPlugin\\NeonlinesMinimalPlugin",
+    "plugin-icon": "src/Resources/config/plugin.png",
+    "copyright": "(c) by webversteher GmbH & Co KG",
     "label": {
       "de-DE": "Minimal Plugin",
-      "en-GB": "Minimal Plugin"
+      "en-GB": "Minimal PLugin"
+    },
+    "description": {
+      "de-DE": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accu!",
+      "en-GB": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accu!"
+    },
+    "manufacturerLink": {
+      "de-DE": "https://www.webversteher.de",
+      "en-GB": "https://www.webversteher.de"
+    },
+    "supportLink": {
+      "de-DE": "https://www.webversteher.de",
+      "en-GB": "https://www.webversteher.de"
     }
   },
   "config": {
