@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/trunk/src/Core/System/Plugin/schema/metadata.xsd">
+    <label lang="de-DE">Minimal Plugin</label>
+    <label lang="en-GB">Minimal Plugin</label>
+    <version>0.0.1</version>
+    <link>https://webversteher.de</link>
+    <author>webversteher</author>
+    <compatibility minVersion="6.4.0.0"/>
+    <license>MIT</license>
+    <changelog lang="de-DE">
+        Initiale Version des minimalen Plugins.
+    </changelog>
+    <changelog lang="en-GB">
+        Initial version of the minimal plugin.
+    </changelog>
+</plugin>
