@@ -15,6 +15,12 @@
       "Webversteher\\NeonlinesMinimalPlugin\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Webversteher\\NeonlinesMinimalPlugin\\Tests\\": "tests/"
+    }
+  },
+
   "extra": {
     "shopware-plugin-class": "Webversteher\\NeonlinesMinimalPlugin\\NeonlinesMinimalPlugin",
     "label": {
