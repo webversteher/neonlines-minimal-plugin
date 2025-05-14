@@ -1,6 +1,21 @@
 {
   "name": "vendor/neonlines-minimal-plugin",
-  "description": "Minimal Plugin mit Minor-Versionserkennung",
+  "label": {
+    "de-DE": "Minimal Plugin",
+    "en-GB": "Minimal Plugin"
+  },
+  "description": {
+    "de-DE": "Minimales Plugin für Shopware.",
+    "en-GB": "Minimal plugin for Shopware."
+  },
+  "manufacturerLink": {
+    "de-DE": "https://webversteher.de",
+    "en-GB": "https://webversteher.de/en"
+  },
+  "supportLink": {
+    "de-DE": "https://webversteher.de/support",
+    "en-GB": "https://webversteher.de/en/support"
+  },
   "type": "shopware-platform-plugin",
   "license": "MIT",
   "version": "0.0.1",

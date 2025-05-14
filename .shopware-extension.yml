@@ -15,3 +15,7 @@ changelog:
 
 store:
   automatic_bugfix_version_compatibility: true
+
+validation:
+  php:
+    linter: native
