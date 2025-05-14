@@ -1,0 +1,21 @@
+{
+  "name": "vendor/neonlines-minimal-plugin",
+  "description": "Minimal Plugin mit Minor-Versionserkennung",
+  "type": "shopware-platform-plugin",
+  "license": "MIT",
+  "require": {
+    "shopware/core": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "NeonlinesWebversteher\NeonlinesWebversteher\NeonlinesMinimalPlugin\\": "src/"
+    }
+  },
+  "extra": {
+    "shopware-plugin-class": "NeonlinesWebversteher\NeonlinesWebversteher\NeonlinesMinimalPlugin\\NeonlinesMinimalPlugin",
+    "label": {
+      "de-DE": "Minimal Plugin",
+      "en-GB": "Minimal Plugin"
+    }
+  }
+}

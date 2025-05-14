@@ -1,0 +1,29 @@
+<?php declare(strict_types=1);
+
+namespace NeonlinesMinimalPlugin;
+
+use Shopware\Core\Framework\Plugin;
+use Shopware\Core\Framework\Plugin\Context\ActivateContext;
+use NeonlinesWebversteher\NeonlinesMinimalPlugin\Core\VersionChecker;
+
+class NeonlinesMinimalPlugin extends Plugin
+{
+    public function activate(ActivateContext $activateContext): void
+    {
+        parent::activate($activateContext);
+
+        $versionChecker = new VersionChecker();
+
+        if ($versionChecker->is64()) {
+            // Code für Shopware 6.4
+        }
+
+        if ($versionChecker->is65()) {
+            // Code für Shopware 6.5
+        }
+
+        if ($versionChecker->is66OrNewer()) {
+            // Code für Shopware 6.6+
+        }
+    }
+}
