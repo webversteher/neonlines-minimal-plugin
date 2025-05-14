@@ -32,10 +32,7 @@ jobs:
           composer-options: --no-scripts --prefer-dist
 
       - name: Run Unit Tests
-        uses: php-actions/phpunit@v3
-        with:
-          configuration: phpunit.xml.dist
-          php_version: ${{ matrix.php }}
+        run: ./vendor/bin/phpunit --configuration phpunit.xml.dist
 
       - name: Validate Plugin
         uses: FriendsOfShopware/shopware-cli-action@v1
