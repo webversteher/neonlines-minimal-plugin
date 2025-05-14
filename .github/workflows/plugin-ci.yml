@@ -1,4 +1,4 @@
-name: Plugin CI
+name: CI/CD Pipeline
 
 on:
   pull_request:
@@ -8,50 +8,54 @@ on:
 
 jobs:
   test-and-build:
-    name: Test & Build on Shopware ${{ matrix.shopware }} with PHP ${{ matrix.php }}
+    name: Test & Build on Shopware ${{ matrix.shopware }} / PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         php: [8.2, 8.3]
         shopware: [6.4, 6.5, 6.6]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Setup PHP
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
 
-      - name: Set up Shopware CLI environment
-        run: |
-          docker run --rm -v $PWD:/app -w /app shopware/shopware-cli \
-            project create --shopware-version=${{ matrix.shopware }} --no-interaction
+      - name: Install dependencies
+        run: composer install --no-interaction --no-scripts --prefer-dist
 
       - name: Run Unit Tests
         run: vendor/bin/phpunit
 
+      - name: Validate Plugin
+        run: |
+          docker run --rm -v $PWD:/app -w /app shopware/shopware-cli \
+            extension validate
+
       - name: Build ZIP
         run: |
           HASH=$(git rev-parse --short HEAD)
+          mkdir -p build
           docker run --rm -v $PWD:/app -w /app shopware/shopware-cli \
             extension zip --out /app/build/${HASH}.zip
 
-      - name: Upload ZIP artifact
+      - name: Upload ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: plugin-${{ matrix.shopware }}-${{ matrix.php }}
+          name: plugin-${{ matrix.shopware }}-php-${{ matrix.php }}
           path: build/*.zip
 
   release:
-    name: Create Release and Upload to Store
+    name: Release & Store Upload
     if: github.event.pull_request.base == 'main' || github.ref == 'refs/heads/main'
     needs: test-and-build
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -64,38 +68,44 @@ jobs:
           minor_pattern: '(feat|refactor)(\(.*\))?:'
           version_format: '${major}.${minor}.${patch}'
 
-      - name: Update composer.json
+      - name: Bump composer version
         run: |
-          jq '.version = "${{ steps.semver.outputs.version }}"' composer.json > tmp && mv tmp composer.json
+          VERSION=${{ steps.semver.outputs.version }}
+          jq ".version = \"${VERSION}\"" composer.json > tmp && mv tmp composer.json
           git config user.name "CI Bot"
           git config user.email "ci@github.com"
-          git commit -am "chore: bump version to ${{ steps.semver.outputs.version }}"
-          git tag ${{ steps.semver.outputs.version }}
+          git commit -am "chore: bump version to ${VERSION}"
+          git tag "${VERSION}"
           git push origin main --tags
 
-      - name: Build ZIP for release
+      - name: Build release ZIP
         run: |
+          mkdir -p build
           docker run --rm -v $PWD:/app -w /app shopware/shopware-cli \
             extension zip --out /app/build/${{ steps.semver.outputs.version }}.zip
 
-      - name: Upload ZIP to Shopware Store
+      - name: Upload to Shopware Store
         env:
           SHOPWARE_ACCESS_USER: ${{ secrets.SHOPWARE_ACCESS_USER }}
           SHOPWARE_ACCESS_TOKEN: ${{ secrets.SHOPWARE_ACCESS_TOKEN }}
         run: |
-          docker run --rm -v $PWD:/app -w /app shopware/shopware-cli \
-            extension upload --zip /app/build/${{ steps.semver.outputs.version }}.zip \
-            --shopware-version=${{ matrix.shopware }}
+          docker run --rm -v $PWD:/app -w /app \
+            -e SHOPWARE_ACCESS_USER \
+            -e SHOPWARE_ACCESS_TOKEN \
+            shopware/shopware-cli \
+            extension upload \
+              --zip /app/build/${{ steps.semver.outputs.version }}.zip \
+              --shopware-version 6.4.0.0 # z. B. mindestsupported Version
 
-      - name: Create GitHub Release
+      - name: GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.semver.outputs.version }}
           files: build/${{ steps.semver.outputs.version }}.zip
 
-      - name: Merge composer.json version bump to develop
+      - name: Merge composer.json back to develop
         run: |
           git fetch origin develop
           git checkout develop
-          git merge --no-ff main -m "chore: merge version bump from main"
+          git merge --no-ff main -m "chore: sync version bump from main"
           git push origin develop
