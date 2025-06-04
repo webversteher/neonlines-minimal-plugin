@@ -16,6 +16,7 @@ class NeonlinesMinimalPlugin extends Plugin
 
         if ($versionChecker->is64()) {
             // Code für Shopware 6.4
+            // Kommentar für Bump
         }
 
         if ($versionChecker->is65()) {
