@@ -3,7 +3,7 @@
   "description": "Minimal Plugin mit Minor-Versionserkennung",
   "type": "shopware-platform-plugin",
   "license": "MIT",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "require": {
     "shopware/core": "*"
   },
