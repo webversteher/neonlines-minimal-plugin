@@ -20,7 +20,6 @@
       "Webversteher\\NeonlinesMinimalPlugin\\Tests\\": "tests/"
     }
   },
-
   "extra": {
     "shopware-plugin-class": "Webversteher\\NeonlinesMinimalPlugin\\NeonlinesMinimalPlugin",
     "plugin-icon": "src/Resources/config/plugin.png",
