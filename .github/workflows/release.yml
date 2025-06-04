@@ -1,28 +1,24 @@
-name: CI/CD Pipeline
+name: Release
 
 on:
-  pull_request:
-    branches: [develop, main]
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
-  test-and-build:
-    name: Test & Build on Shopware ${{ matrix.shopware }} / PHP ${{ matrix.php }}
+  release:
+    name: Release & Store Upload
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        php: [8.2, 8.3]
-        shopware: [6.4, 6.5, 6.6]
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: 8.2
           extensions: mbstring, xml, ctype, iconv, intl, json, pdo, zip, bcmath
           tools: composer
 
@@ -38,28 +34,6 @@ jobs:
         uses: FriendsOfShopware/shopware-cli-action@v1
         with:
           command: extension validate .
-
-      - name: Build ZIP
-        uses: FriendsOfShopware/shopware-cli-action@v1
-        with:
-          command: extension zip . --out build/${{ github.sha }}.zip
-
-      - name: Upload ZIP
-        uses: actions/upload-artifact@v4
-        with:
-          name: plugin-${{ matrix.shopware }}-php-${{ matrix.php }}
-          path: build/*.zip
-
-  release:
-    name: Release & Store Upload
-    if: github.ref == 'refs/heads/main'
-    needs: test-and-build
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Determine next version
         id: semver
@@ -85,17 +59,6 @@ jobs:
         uses: FriendsOfShopware/shopware-cli-action@v1
         with:
           command: extension zip . --out build/${{ steps.semver.outputs.version }}.zip
-
-      #- name: Upload to Shopware Store
-      #  env:
-      #    SHOPWARE_ACCESS_USER: ${{ secrets.SHOPWARE_ACCESS_USER }}
-      #    SHOPWARE_ACCESS_TOKEN: ${{ secrets.SHOPWARE_ACCESS_TOKEN }}
-      #  uses: FriendsOfShopware/shopware-cli-action@v1
-      #  with:
-      #    command: >
-      #      extension upload
-      #      --zip build/${{ steps.semver.outputs.version }}.zip
-      #      --shopware-version 6.4.0.0
 
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
