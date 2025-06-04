@@ -3,12 +3,13 @@
   "description": "Minimal Plugin mit Minor-Versionserkennung",
   "type": "shopware-platform-plugin",
   "license": "MIT",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "require": {
     "shopware/core": "*"
   },
   "require-dev": {
-    "phpunit/phpunit": "^10.0"
+    "phpunit/phpunit": "^10.0",
+    "friendsofphp/php-cs-fixer": "*"
   },
   "autoload": {
     "psr-4": {

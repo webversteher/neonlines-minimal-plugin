@@ -1,0 +1,37 @@
+name: Code Quality
+
+on:
+  push:
+    branches:
+      - 'features/**'
+
+jobs:
+  cs-fix:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0 # wichtig für git commit
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2' # oder passender Version
+          tools: php-cs-fixer
+
+      - name: Run PHP CS Fixer
+        run: php-cs-fixer fix --allow-risky=yes --verbose
+
+      - name: Commit and push changes (if needed)
+        run: |
+          if [[ `git status --porcelain` ]]; then
+            git config user.name "CI Bot"
+            git config user.email "ci@github.com"
+            git commit -am "style: apply php-cs-fixer auto-fixes"
+            git push
+          else
+            echo "No CS fixes needed"
+          fi
