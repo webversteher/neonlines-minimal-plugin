@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Release & Store Upload
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: mbstring, xml, ctype, iconv, intl, json, pdo, zip, bcmath
+          tools: composer
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --no-scripts --prefer-dist
+
+      - name: Run Unit Tests
+        run: ./vendor/bin/phpunit --configuration phpunit.xml.dist
+
+      - name: Validate Plugin
+        uses: FriendsOfShopware/shopware-cli-action@v1
+        with:
+          command: extension validate .
+
+      - name: Determine next version
+        id: semver
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          tag_prefix: ''
+          major_pattern: 'BREAKING CHANGE:'
+          minor_pattern: '(feat|refactor)(\(.*\))?:'
+          version_format: '${major}.${minor}.${patch}'
+          bump_each_commit: false
+
+      - name: Bump composer version
+        run: |
+          VERSION=${{ steps.semver.outputs.version }}
+          jq ".version = \"${VERSION}\"" composer.json > tmp && mv tmp composer.json
+          git config user.name "CI Bot"
+          git config user.email "ci@github.com"
+          git commit -am "chore: bump version to ${VERSION}"
+          git tag "${VERSION}"
+          git push origin main --tags
+
+      - name: Build release ZIP
+        uses: FriendsOfShopware/shopware-cli-action@v1
+        with:
+          command: extension zip . --out build/${{ steps.semver.outputs.version }}.zip
+
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.semver.outputs.version }}
+          files: build/${{ steps.semver.outputs.version }}.zip
+
+      - name: Merge composer.json back to develop
+        run: |
+          git fetch origin develop
+          git checkout develop
+          git merge --no-ff main -m "chore: sync version bump from main"
+          git push origin develop
