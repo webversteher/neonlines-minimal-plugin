@@ -3,7 +3,7 @@
   "description": "Minimal Plugin mit Minor-Versionserkennung",
   "type": "shopware-platform-plugin",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "require": {
     "shopware/core": "*"
   },
@@ -20,7 +20,6 @@
       "Webversteher\\NeonlinesMinimalPlugin\\Tests\\": "tests/"
     }
   },
-
   "extra": {
     "shopware-plugin-class": "Webversteher\\NeonlinesMinimalPlugin\\NeonlinesMinimalPlugin",
     "plugin-icon": "src/Resources/config/plugin.png",
