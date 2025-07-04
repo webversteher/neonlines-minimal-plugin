@@ -74,7 +74,7 @@ jobs:
 
       - name: Copy and patch plugin in container
         run: |
-          cat ls -la
+          ls -la
           docker cp ./ dockware:/var/www/html/custom/plugins/NeonlinesMinimalPlugin
           docker exec shop bash -c 'sudo chown www-data:www-data /var/www/html/custom/plugins -R'
                     
