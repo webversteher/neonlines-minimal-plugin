@@ -8,6 +8,7 @@ jobs:
   php-unit:
     name: PHP Unit | Shopware ${{ matrix.shopware }} / PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
+    needs: cypress-e2e
     strategy:
       fail-fast: false
       matrix:
@@ -43,7 +44,7 @@ jobs:
 
   cypress-e2e:
     name: Cypress E2E | Shopware ${{ matrix.shopware }} / PHP ${{ matrix.php }}
-    needs: php-unit
+    #needs: php-unit
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -67,32 +68,20 @@ jobs:
             sleep 5
           done
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install Cypress dependencies
-        run: npm install
+      - name: Patch composer.json to test matrix version
+        run: |
+          sed -i 's/"shopware\/core": "[^"]*"/"shopware\/core": "^${{ matrix.shopware }}"/' composer.json
 
       - name: Copy and patch plugin in container
         run: |
-          PLUGIN_NAME=$(ls src | head -n 1)
+          cat ls -la
           docker cp ./ dockware:/var/www/html/custom/plugins/NeonlinesMinimalPlugin
-          
-          # Patch composer.json in the container
-          docker exec dockware bash -c "sed -i 's/\"shopware\\/core\": \\\"[^\"]*\\\"/\"shopware\\/core\": \\\"^${{ matrix.shopware }}\\\"/' /var/www/html/custom/plugins/NeonlinesMinimalPlugin/composer.json"
-          
-          # Optional: re-require in container to ensure correct deps (fail silently if already met)
-          docker exec dockware bash -c "cd /var/www/html && composer require shopware/core:^${{ matrix.shopware }} --no-interaction || true"
-          
+          docker exec shop bash -c 'sudo chown www-data:www-data /var/www/html/custom/plugins -R'
+                    
           # Install & activate plugin
           docker exec dockware bash -c "bin/console plugin:refresh"
           docker exec dockware bash -c "bin/console plugin:install --activate NeonlinesMinimalPlugin"
           docker exec dockware bash -c "bin/console cache:clear"
-
-      - name: Run Cypress tests
-        uses: cypress-io/github-action@v6
-        with:
-          wait-on: 'http://localhost'
-          wait-on-timeout: 120
+          
+          cd ./plugin/tests/Cypress 
+          docker run --network host -v $PWD:/e2e -w /e2e -e CYPRESS_BASE_URL=http://localhost cypress/included:10.8.0
