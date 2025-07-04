@@ -51,20 +51,21 @@ jobs:
         php: [8.2, 8.3]
         shopware: [6.6.0.0, 6.7.0.0]
 
-    services:
-      shopware:
-        image: dockware/play:${{ matrix.shopware }}
-        ports:
-          - 80:80
-        options: >-
-          --health-cmd "curl -f http://localhost || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 15
-
     steps:
       - name: Checkout Plugin
         uses: actions/checkout@v4
+
+      - name: Start Dockware container
+        run: |
+          docker run -d --name dockware \
+            -p 80:80 \
+            -e XDEBUG_ENABLED=0 \
+            dockware/play:${{ matrix.shopware }}
+          
+          echo "Waiting for Dockware to boot..."
+          until curl -sSf http://localhost > /dev/null; do
+            sleep 5
+          done
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -74,28 +75,21 @@ jobs:
       - name: Install Cypress dependencies
         run: npm install
 
-      - name: Wait for Shopware to start
-        run: |
-          echo "Waiting for Shopware..."
-          until curl -sSf http://localhost > /dev/null; do
-            sleep 5
-          done
-
-      - name: Copy and patch plugin inside container
+      - name: Copy and patch plugin in container
         run: |
           PLUGIN_NAME=$(ls src | head -n 1)
-          docker cp ./src/$PLUGIN_NAME shopware:/var/www/html/custom/plugins/$PLUGIN_NAME
+          docker cp ./src/$PLUGIN_NAME dockware:/var/www/html/custom/plugins/$PLUGIN_NAME
           
           # Patch composer.json in the container
-          docker exec shopware bash -c "sed -i 's/\"shopware\\/core\": \\\"[^\"]*\\\"/\"shopware\\/core\": \\\"^${{ matrix.shopware }}\\\"/' /var/www/html/custom/plugins/$PLUGIN_NAME/composer.json"
+          docker exec dockware bash -c "sed -i 's/\"shopware\\/core\": \\\"[^\"]*\\\"/\"shopware\\/core\": \\\"^${{ matrix.shopware }}\\\"/' /var/www/html/custom/plugins/$PLUGIN_NAME/composer.json"
           
           # Optional: re-require in container to ensure correct deps (fail silently if already met)
-          docker exec shopware bash -c "cd /var/www/html && composer require shopware/core:^${{ matrix.shopware }} --no-interaction || true"
+          docker exec dockware bash -c "cd /var/www/html && composer require shopware/core:^${{ matrix.shopware }} --no-interaction || true"
           
           # Install & activate plugin
-          docker exec shopware bash -c "bin/console plugin:refresh"
-          docker exec shopware bash -c "bin/console plugin:install --activate $PLUGIN_NAME"
-          docker exec shopware bash -c "bin/console cache:clear"
+          docker exec dockware bash -c "bin/console plugin:refresh"
+          docker exec dockware bash -c "bin/console plugin:install --activate $PLUGIN_NAME"
+          docker exec dockware bash -c "bin/console cache:clear"
 
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
