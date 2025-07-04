@@ -72,7 +72,7 @@ jobs:
           node-version: 18
 
       - name: Install Cypress dependencies
-        run: npm ci
+        run: npm install
 
       - name: Wait for Shopware to start
         run: |
