@@ -43,45 +43,73 @@ jobs:
           command: extension validate .
 
   cypress-e2e:
-    name: Cypress E2E | Shopware ${{ matrix.shopware }} / PHP ${{ matrix.php }}
-    #needs: php-unit
+    name: E2E Tests | Shopware ${{ matrix.shopware }}, PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        php: [8.2, 8.3]
-        shopware: [6.6.0.0, 6.7.0.0]
-
+        include:
+          - shopware: '6.4.7.0'
+            php: '8.0'
+          - shopware: '6.4.6.1'
+            php: '8.0'
+          - shopware: '6.4.5.1'
+            php: '7.4'
     steps:
-      - name: Checkout Plugin
-        uses: actions/checkout@v4
 
-      - name: Start Dockware container
-        run: |
-          docker run -d --name dockware \
-            -p 80:80 \
-            -e XDEBUG_ENABLED=0 \
-            dockware/play:${{ matrix.shopware }}
-          
-          echo "Waiting for Dockware to boot..."
-          until curl -sSf http://localhost > /dev/null; do
-            sleep 5
-          done
+      - name: Clone Code
+        uses: actions/checkout@v2
 
-      - name: Patch composer.json to test matrix version
+      - name: Download Docker
         run: |
-          sed -i 's/"shopware\/core": "[^"]*"/"shopware\/core": "^${{ matrix.shopware }}"/' composer.json
+          docker pull dockware/dev:${{ matrix.shopware }}
 
-      - name: Copy and patch plugin in container
+      - name: Start Docker
         run: |
-          ls -la
-          docker cp ./ dockware:/var/www/html/custom/plugins/NeonlinesMinimalPlugin
+          docker run --rm -p 80:80 -p 443:443 --name shop --env PHP_VERSION=${{ matrix.php }} -d dockware/dev:${{ matrix.shopware }}
+          sleep 30
+          docker logs shop
+          # now change the domain of our shop if required
+          sudo echo "127.0.0.1 local.shopware.shop" | sudo tee -a /etc/hosts
+          docker exec shop bash -c "mysql -u root -proot shopware -e \"UPDATE sales_channel_domain SET url='https://local.shopware.shop' WHERE url NOT LIKE 'default.%';\""
+
+      - name: Upload into Docker
+        run: |
+          docker cp $(pwd)/. shop:/var/www/html/custom/plugins/NeonlinesMinimalPlugin
           docker exec shop bash -c 'sudo chown www-data:www-data /var/www/html/custom/plugins -R'
-                    
-          # Install & activate plugin
-          docker exec dockware bash -c "bin/console plugin:refresh"
-          docker exec dockware bash -c "bin/console plugin:install --activate NeonlinesMinimalPlugin"
-          docker exec dockware bash -c "bin/console cache:clear"
-          
-          cd ./plugin/tests/Cypress 
-          docker run --network host -v $PWD:/e2e -w /e2e -e CYPRESS_BASE_URL=http://localhost cypress/included:10.8.0
+
+      - name: Install and Build Artifacts
+        run: |
+          docker exec shop bash -c 'cd /var/www/html/custom/plugins/NeonlinesMinimalPlugin && make install -B'
+          docker exec shop bash -c 'cd /var/www/html/custom/plugins/NeonlinesMinimalPlugin && make build -B'
+
+      - name: Install/Configure Plugin
+        run: |
+          docker exec shop bash -c 'php bin/console plugin:refresh'
+          docker exec shop bash -c 'php bin/console plugin:install NeonlinesMinimalPlugin --activate'
+          docker exec shop bash -c 'php bin/console system:config:set NeonlinesMinimalPlugin.config.MyKey ${{ secrets.MYKEY_TEST }}'
+          docker exec shop bash -c 'php bin/console cache:clear'
+
+      - name: Install Cypress
+        run: cd tests/Cypress && make install -B
+
+      - name: Start Cypress
+        run: cd tests/Cypress && CYPRESS_BASE_URL=http://local.shopware.shop CYPRESS_SHOPWARE=${{ matrix.shopware }} ./node_modules/.bin/cypress run --headless
+
+      - name: Download Logs
+        if: ${{ always() }}
+        run: |
+          mkdir -p $(pwd)/Tests/Cypress/cypress/logs/shopware
+          mkdir -p $(pwd)/Tests/Cypress/cypress/logs/apache
+          docker cp shop:/var/www/html/var/log/. $(pwd)/Tests/Cypress/cypress/logs/shopware
+          docker cp shop:/var/log/php/. $(pwd)/Tests/Cypress/cypress/logs/apache
+
+      - name: Store Cypress Results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: cypress_results_sw_v${{ matrix.shopware }}
+          retention-days: 1
+          path: |
+            Tests/Cypress/cypress/logs
+            Tests/Cypress/cypress/videos
+            Tests/Cypress/cypress/screenshots
