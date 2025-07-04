@@ -78,17 +78,17 @@ jobs:
       - name: Copy and patch plugin in container
         run: |
           PLUGIN_NAME=$(ls src | head -n 1)
-          docker cp ./src/$PLUGIN_NAME dockware:/var/www/html/custom/plugins/$PLUGIN_NAME
+          docker cp ./ dockware:/var/www/html/custom/plugins/NeonlinesMinimalPlugin
           
           # Patch composer.json in the container
-          docker exec dockware bash -c "sed -i 's/\"shopware\\/core\": \\\"[^\"]*\\\"/\"shopware\\/core\": \\\"^${{ matrix.shopware }}\\\"/' /var/www/html/custom/plugins/$PLUGIN_NAME/composer.json"
+          docker exec dockware bash -c "sed -i 's/\"shopware\\/core\": \\\"[^\"]*\\\"/\"shopware\\/core\": \\\"^${{ matrix.shopware }}\\\"/' /var/www/html/custom/plugins/NeonlinesMinimalPlugin/composer.json"
           
           # Optional: re-require in container to ensure correct deps (fail silently if already met)
           docker exec dockware bash -c "cd /var/www/html && composer require shopware/core:^${{ matrix.shopware }} --no-interaction || true"
           
           # Install & activate plugin
           docker exec dockware bash -c "bin/console plugin:refresh"
-          docker exec dockware bash -c "bin/console plugin:install --activate $PLUGIN_NAME"
+          docker exec dockware bash -c "bin/console plugin:install --activate NeonlinesMinimalPlugin"
           docker exec dockware bash -c "bin/console cache:clear"
 
       - name: Run Cypress tests
